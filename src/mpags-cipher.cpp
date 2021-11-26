@@ -1,6 +1,7 @@
 #include "CipherFactory.hpp"
 #include "CipherMode.hpp"
 #include "CipherType.hpp"
+#include "CommandLineExceptions.hpp"
 #include "ProcessCommandLine.hpp"
 #include "TransformChar.hpp"
 
@@ -20,12 +21,14 @@ int main(int argc, char* argv[])
         false, false, "", "", "", CipherMode::Encrypt, CipherType::Caesar};
 
     // Process command line arguments
-    const bool cmdLineStatus{processCommandLine(cmdLineArgs, settings)};
-
-    // Any failure in the argument processing means we can't continue
-    // Use a non-zero return value to indicate failure
-    if (!cmdLineStatus) {
+    try {
+        processCommandLine(cmdLineArgs, settings);
+    } catch (const MissingArgument& e) {
+        std::cerr << "[error] Missing argument: " << e.what() << std::endl;
         return 1;
+    } catch (const UnknownArgument& e) {
+        std::cerr << "[error] Unknown argument: " << e.what() << std::endl;
+        return 2;
     }
 
     // Handle help, if requested
@@ -100,7 +103,8 @@ int main(int argc, char* argv[])
     }
 
     // Run the cipher on the input text, specifying whether to encrypt/decrypt
-    const std::string outputText{cipher->applyCipher(inputText, settings.cipherMode)};
+    const std::string outputText{
+        cipher->applyCipher(inputText, settings.cipherMode)};
 
     // Output the encrypted/decrypted text to stdout/file
     if (!settings.outputFile.empty()) {
