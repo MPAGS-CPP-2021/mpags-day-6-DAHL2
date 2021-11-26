@@ -112,6 +112,7 @@ file supplied with the `-o` option.
     │   ├── CipherFactory.hpp
     │   ├── CipherMode.hpp
     │   ├── CipherType.hpp
+    │   ├── CommandLineExceptions.hpp
     │   ├── CMakeLists.txt
     │   ├── PlayfairCipher.cpp
     │   ├── PlayfairCipher.hpp
