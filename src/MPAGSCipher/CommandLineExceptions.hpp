@@ -25,22 +25,22 @@ class MissingArgument : public std::invalid_argument {
         std::invalid_argument(msg){};
 };
 
-// Don't actaully test the formatting in Process command line, and currently check the
-//  Caesar key via inbuilt invalid_argument exception from std::stoul
-// /**
-//  * \class InvalidArgument
-//  * \brief Exception to indicate the user has passed an argument with the wrong format
-//  */
-// class InvalidArgument : public std::invalid_argument {
-//   public:
-//     /**
-//      * \brief Create a new InvalidArgument with the given message
-//      *
-//      * \param msg the message to be passed in the exception
-//      */
-//     explicit InvalidArgument(const std::string& msg) :
-//         std::invalid_argument(msg){};
-// };
+// These error are not actually thrown by the processCommandLine function.
+//  but they arise form command line errors
+/**
+ * \class InvalidArgument
+ * \brief Exception to indicate the user has passed an argument with the wrong format
+ */
+class InvalidArgument : public std::invalid_argument {
+  public:
+    /**
+     * \brief Create a new InvalidArgument with the given message
+     *
+     * \param msg the message to be passed in the exception
+     */
+    explicit InvalidArgument(const std::string& msg) :
+        std::invalid_argument(msg){};
+};
 
 /**
  * \class UnknownArgument

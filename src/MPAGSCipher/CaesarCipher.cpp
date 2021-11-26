@@ -1,5 +1,6 @@
 #include "CaesarCipher.hpp"
 #include "Alphabet.hpp"
+#include "CommandLineExceptions.hpp"
 
 #include <iostream>
 #include <string>
@@ -15,32 +16,25 @@ CaesarCipher::CaesarCipher(const std::string& key) : key_{0}
     if (!key.empty()) {
         // Explicitly check the user hasn't tried to input a negative number
         if (key.front() == '-') {
-            std::cerr
-                << "[error] cipher key must be an unsigned long integer for Caesar cipher,\n"
-                << "        the supplied key (" << key
-                << ") appears to be a negative number,\n"
-                << "        which will not be properly converted.\n"
-                << "Continuing with default key: 1" << std::endl;
-            key_ = 1;
+            // Not sure how to format this string nicely!
+            throw InvalidArgument(
+                "cipher key must be an unsigned long integer for Caesar cipher,\n        the supplied key (" +
+                key + ") appears to be a negative number");
         }
-
         try {
             key_ = std::stoul(key) % Alphabet::size;
         } catch (std::invalid_argument& e) {
-            // N.B. this error is only raised if ALL characters are not integers: it will still pass
+            // N.B. this error is only thrown if ALL characters are not integers: it will still pass
             //  if i.e. we type "1banana": this isn't ideal so the previous method of handling this might be better!
-            std::cerr
-                << "[error] cipher key must be an unsigned long integer for Caesar cipher,\n"
-                << "        the supplied key (" << key
-                << ") could not be successfully converted.\n"
-                << "Continuing with default key: 1" << std::endl;
-            key_ = 1;
+            throw InvalidArgument(
+                "cipher key must be an unsigned long integer for Caesar cipher,\n        the supplied key (" +
+                key + ") does not contain any numbers");
         } catch (std::out_of_range& e) {
-            std::cerr
-                << "[error] the supplied cipher key is too large to be converted to an unsigned long.\n"
-                << "Continuing with default key: 1" << std::endl;
-            key_ = 1;
+            throw InvalidArgument(
+                "the supplied cipher key is too large to be converted to an unsigned long");
         }
+    } else {
+        throw InvalidArgument("a cipher key must be supplied");
     }
 }
 

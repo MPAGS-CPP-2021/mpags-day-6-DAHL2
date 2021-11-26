@@ -25,10 +25,10 @@ int main(int argc, char* argv[])
         processCommandLine(cmdLineArgs, settings);
     } catch (const MissingArgument& e) {
         std::cerr << "[error] Missing argument: " << e.what() << std::endl;
-        return 1;
+        return 2;
     } catch (const UnknownArgument& e) {
         std::cerr << "[error] Unknown argument: " << e.what() << std::endl;
-        return 2;
+        return 4;
     }
 
     // Handle help, if requested
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
             << "  -c CIPHER        Specify the cipher to be used to perform the encryption/decryption\n"
             << "                   CIPHER can be caesar, playfair, or vigenere - caesar is the default\n\n"
             << "  -k KEY           Specify the cipher KEY\n"
-            << "                   A null key, i.e. no encryption, is used if not supplied\n\n"
+            << "                   A null key is used if not supplied, which is only valid for the playfair cipher\n\n"
             << "  --encrypt        Will use the cipher to encrypt the input text (default behaviour)\n\n"
             << "  --decrypt        Will use the cipher to decrypt the input text\n\n"
             << std::endl;
@@ -92,8 +92,16 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Smart pointer would automatically point to nullptr anyway, but to be explicit...
+    std::unique_ptr<Cipher> cipher{nullptr};
+
     // Request construction of the appropriate cipher
-    auto cipher = cipherFactory(settings.cipherType, settings.cipherKey);
+    try {
+        cipher = cipherFactory(settings.cipherType, settings.cipherKey);
+    } catch (const InvalidArgument& e) {
+        std::cerr << "[error] InvalidArgument: " << e.what() << std::endl;
+        return 3;
+    }
 
     // Check that the cipher was constructed successfully
     if (!cipher) {
