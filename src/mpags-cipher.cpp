@@ -6,9 +6,12 @@
 #include "TransformChar.hpp"
 
 #include <cctype>
+#include <chrono>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 int main(int argc, char* argv[])
@@ -110,9 +113,63 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Run the cipher on the input text, specifying whether to encrypt/decrypt
-    const std::string outputText{
-        cipher->applyCipher(inputText, settings.cipherMode)};
+    const size_t noThreads{4};
+    const size_t inputSize{inputText.length()};
+    size_t currentLocation{0};
+
+    std::vector<std::string> splitInputText;
+
+    for (size_t i{0}; i < noThreads; i++) {
+        // This is bad: could screw up the playfair cipher by chopping up the string in the wrong place
+        //  To implement that properly we would need to make the applyCipher function itself multithreaded,
+        //  so at the moment, we just have to deal with extra characters potentially being added.
+        splitInputText.push_back(inputText.substr(
+            currentLocation,
+            // There is some magic here: this gives the 2nd and 4th elements the extra character if inputSize%4 = 2
+            ((i + 1) * inputSize / noThreads) -
+                currentLocation));    // Need to substract current location, since substr takes (start_pos, length_of_substr)
+                                      // Not like python strings!!!
+        currentLocation = (i + 1) * inputSize / noThreads;
+    }
+
+    std::vector<std::future<std::string>> futures;
+
+    // Set the threads running
+    // For some reason, get another segmentation error if I try to use the same loop as the one to get the input text
+    for (size_t i{0}; i < noThreads; i++) {
+        // It feels to me like this should be doable without a lambda, but I couldn't figure it out!
+        auto threadCipher = [&cipher, &splitInputText, i, &settings]() {
+            return cipher->applyCipher(splitInputText[i], settings.cipherMode);
+        };
+
+        futures.push_back(std::async(std::launch::async, threadCipher));
+    }
+
+    size_t currentCheckThread{0};
+    std::future_status status{
+        futures[currentCheckThread].wait_for(std::chrono::milliseconds(100))};
+    // Wait for all threads to be finished
+    do {
+        if ((status == std::future_status::ready) &&
+            (currentCheckThread < noThreads - 1)) {
+            currentCheckThread++;
+            status = futures[currentCheckThread].wait_for(
+                std::chrono::milliseconds(1));
+        } else {
+            status = futures[currentCheckThread].wait_for(
+                std::chrono::milliseconds(500));
+        }
+    } while (!((currentCheckThread == noThreads - 1) &&
+               (status == std::future_status::ready)));
+
+    // // Run the cipher on the input text, specifying whether to encrypt/decrypt
+    // const std::string outputText{
+    //     cipher->applyCipher(inputText, settings.cipherMode)};
+
+    std::string outputText{""};
+    for (size_t i{0}; i < noThreads; i++) {
+        outputText += futures[i].get();
+    }
 
     // Output the encrypted/decrypted text to stdout/file
     if (!settings.outputFile.empty()) {
