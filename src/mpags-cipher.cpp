@@ -123,6 +123,7 @@ int main(int argc, char* argv[])
         // This is bad: could screw up the playfair cipher by chopping up the string in the wrong place
         //  To implement that properly we would need to make the applyCipher function itself multithreaded,
         //  so at the moment, we just have to deal with extra characters potentially being added.
+        //  (This might result in the program being unable to decrypt)
         splitInputText.push_back(inputText.substr(
             currentLocation,
             ((i + 1) * inputSize / noThreads) -
